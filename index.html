@@ -13,7 +13,7 @@
   --green:#059669;--green-bg:#D1FAE5;--green-text:#065F46;
   --amber:#D97706;--amber-bg:#FEF3C7;--amber-text:#92400E;
   --red:#DC2626;--red-bg:#FEE2E2;--red-text:#991B1B;
-  --blue:#0891B2;--blue-bg:#CFFAFE;--blue-text:#0E7490;
+  --blue:#2563EB;--blue-bg:#DBEAFE;--blue-text:#1D4ED8;
   --violet:#7C3AED;--violet-bg:#EDE9FE;--violet-text:#5B21B6;
   --gray-bg:#F1EEFC;--gray-text:#6B6480;
   --grad1:linear-gradient(135deg,#7C3AED,#DB2777);
@@ -37,7 +37,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 .nav-item{display:flex;align-items:center;gap:9px;padding:8px 14px;font-size:12.5px;color:var(--text2);cursor:pointer;border:none;background:none;width:100%;text-align:left;border-left:3px solid transparent;transition:all .12s;white-space:nowrap}
 .nav-item:hover{background:var(--surface2);color:var(--text)}
 .nav-item.active{background:var(--violet-bg);color:var(--violet-text);font-weight:600;border-left-color:var(--accent)}
-.nav-icon{font-size:15px;flex-shrink:0;width:18px;text-align:center;display:inline-flex;align-items:center;justify-content:center}
+.nav-icon{font-size:15px;flex-shrink:0;width:24px;height:24px;text-align:center;display:inline-flex;align-items:center;justify-content:center}.nav-map-icon svg{width:22px;height:22px;display:block}
 .nav-label{flex:1;overflow:hidden;text-overflow:ellipsis}
 .nav-count{margin-left:auto;font-size:10px;background:var(--surface2);color:var(--text3);padding:1px 6px;border-radius:8px;font-weight:700;flex-shrink:0}
 .nav-sub{padding-left:10px}
@@ -212,7 +212,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 <div class="layout">
 <nav class="sidebar" id="sidebar">
   <div class="nav-section">Dashboards</div>
-  <button class="nav-item active" onclick="showPanel('pakistan',this)"><span class="nav-icon">&#127477;&#127472;</span><span class="nav-label">Pakistan (Country)</span></button>
+  <button class="nav-item active" onclick="showPanel('pakistan',this)"><span class="nav-icon nav-map-icon" id="country-nav-icon"></span><span class="nav-label">Pakistan (Country)</span></button>
   <div id="rec-nav-dash"></div>
   <hr class="nav-divider">
   <div class="nav-section">Activities</div>
@@ -538,7 +538,7 @@ function statusData(list){
   const c = countsFor(list);
   return [
     {label:'Completed',v:c['Completed'],color:'#059669',status:'Completed'},
-    {label:'On Track',v:c['On Track'],color:'#0891B2',status:'On Track'},
+    {label:'On Track',v:c['On Track'],color:'#2563EB',status:'On Track'},
     {label:'Delayed',v:c['Delayed'],color:'#DC2626',status:'Delayed'},
     {label:'Pending',v:c['Pending'],color:'#D97706',status:'Pending'},
     {label:'Not Set',v:c[''],color:'#C9C2E8',status:'__NONE__'},
@@ -648,8 +648,23 @@ const MAP_PATHS = {
 };
 const PROVINCE_COLORS = {
   NATIONAL:'#7C3AED', PUNJAB:'#2563EB', SINDH:'#EC4899', KPK:'#16A34A',
-  BALUCHISTAN:'#D97706', AJK:'#0891B2', GB:'#DC2626'
+  BALUCHISTAN:'#D97706', AJK:'#0891B2', GB:'#A16207'
 };
+
+// Sidebar map thumbnails. Province icons reuse the exact SVG boundary paths and
+// the same province colors used by the main Pakistan map. The country icon is
+// a compact composite of all province/level shapes so it shows the complete map.
+function mapIconSVG(rec){
+  const parts = [];
+  if(rec==='NATIONAL'){
+    ['BALUCHISTAN','SINDH','PUNJAB','KPK','GB','AJK'].forEach(r=>{
+      if(MAP_PATHS[r]) parts.push(`<path d="${MAP_PATHS[r]}" fill="${PROVINCE_COLORS[r]}"/>`);
+    });
+  } else if(MAP_PATHS[rec]) {
+    parts.push(`<path d="${MAP_PATHS[rec]}" fill="${PROVINCE_COLORS[rec]||'#7C3AED'}"/>`);
+  }
+  return `<svg viewBox="0 70 390 330" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">${parts.join('')}</svg>`;
+}
 function hexToRgb(hex){ hex=hex.replace('#',''); const n=parseInt(hex,16); return [(n>>16)&255,(n>>8)&255,n&255]; }
 function rgbToHex(rgb){ return '#'+rgb.map(v=>Math.round(Math.max(0,Math.min(255,v))).toString(16).padStart(2,'0')).join(''); }
 function provinceColor(rec,p){
@@ -1011,13 +1026,13 @@ function buildNav(){
   RECIPIENT_ORDER.forEach(r=>{
     const dBtn = document.createElement('button');
     dBtn.className='nav-item'; dBtn.onclick=function(){ showPanel('prov-'+r,this); };
-    dBtn.innerHTML = `<span class="nav-icon">${RECIPIENT_ICON[r]||'&#128205;'}</span><span class="nav-label">${RECIPIENT_LABEL[r]}</span>`;
+    dBtn.innerHTML = `<span class="nav-icon nav-map-icon">${mapIconSVG(r)}</span><span class="nav-label">${RECIPIENT_LABEL[r]}</span>`;
     dashEl.appendChild(dBtn);
 
     const aBtn = document.createElement('button');
     aBtn.className='nav-item nav-sub'; aBtn.onclick=function(){ showActivities(r,this); };
     const n = LEAVES.filter(l=>l.recipient===r).length;
-    aBtn.innerHTML = `<span class="nav-icon">${RECIPIENT_ICON[r]||'&#128205;'}</span><span class="nav-label">${RECIPIENT_LABEL[r]}</span><span class="nav-count">${n}</span>`;
+    aBtn.innerHTML = `<span class="nav-icon nav-map-icon">${mapIconSVG(r)}</span><span class="nav-label">${RECIPIENT_LABEL[r]}</span><span class="nav-count">${n}</span>`;
     actEl.appendChild(aBtn);
 
     const panel = document.createElement('div');
@@ -1146,6 +1161,7 @@ async function autoSyncOnLoad(){
 
 // ---------- INIT ----------
 loadState();
+document.getElementById('country-nav-icon').innerHTML = mapIconSVG('NATIONAL');
 buildNav();
 populateDropdowns();
 filtered = LEAVES.slice();
