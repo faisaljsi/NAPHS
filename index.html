@@ -59,16 +59,20 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 .full-row{margin-bottom:18px}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 1px 3px rgba(109,40,217,.06)}
 .card-title{font-size:11px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
-.area-row{margin-bottom:10px;cursor:pointer;border-radius:8px;padding:4px 6px;margin-left:-6px;margin-right:-6px;transition:background .12s}
-.area-row:hover{background:var(--surface2)}
-.area-row-head{display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:3px;align-items:baseline;gap:6px}
-.area-lbl{color:var(--text);font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.area-stats{display:flex;gap:8px;align-items:center;white-space:nowrap;flex-shrink:0}
-.area-total{font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace}
-.area-pct{font-size:10px;color:#fff;background:var(--grad1);padding:1px 6px;border-radius:5px;font-weight:700}
-.bar-track{height:8px;background:var(--surface2);border-radius:5px;overflow:hidden;position:relative}
-.bar-bg{height:100%;border-radius:5px;position:absolute;top:0;left:0;opacity:.3}
-.bar-done{height:100%;border-radius:5px;position:absolute;top:0;left:0}
+.area-progress-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 16px;align-items:stretch}
+.area-donut-card{min-width:0;min-height:205px;border:1px solid var(--border);border-radius:12px;padding:13px 12px 12px;background:linear-gradient(180deg,#fff 0%,var(--surface) 100%);cursor:pointer;transition:transform .14s,box-shadow .14s,border-color .14s;display:flex;flex-direction:column;align-items:center;gap:5px}
+.area-donut-card:hover{background:var(--surface2);border-color:var(--purple2);transform:translateY(-2px);box-shadow:0 4px 12px rgba(109,40,217,.09)}
+.area-donut-title{font-size:12px;font-weight:700;color:var(--text);text-align:center;line-height:1.25;min-height:27px;display:flex;align-items:center;justify-content:center;width:100%;overflow-wrap:anywhere}
+.area-donut-svg{width:116px;height:116px;flex:0 0 auto;overflow:visible}
+.area-donut-center{font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:700;fill:var(--text)}
+.area-donut-sub{font-family:'IBM Plex Sans',sans-serif;font-size:7px;fill:var(--text3)}
+.area-donut-total{font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace}
+.area-donut-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 7px;width:100%;margin-top:2px}
+.area-mini-key{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text2);white-space:nowrap}
+.area-mini-dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex:0 0 auto}
+.area-mini-count{font-weight:700;color:var(--text)}
+@media(max-width:760px){.area-progress-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.area-progress-grid{grid-template-columns:1fr}}
 .pie-wrap{display:flex;align-items:center;gap:14px}
 .pie-legend{flex:1}
 .pie-legend-item{display:flex;align-items:center;gap:7px;margin-bottom:7px;cursor:pointer;border-radius:7px;padding:3px 6px;margin-left:-6px;transition:background .12s}
@@ -134,6 +138,40 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 .map-list-item{display:flex;align-items:center;gap:6px;cursor:pointer;padding:3px 8px;border-radius:6px;font-size:11.5px;color:var(--text2)}
 .map-list-item:hover{background:var(--surface2)}
 .map-sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+
+/* MAP STATUS CALLOUTS */
+/* Compact callout layout: keep the map at its original visual scale and bring
+   each status card close to the corresponding province. */
+.prov-status-network{position:relative;margin-top:2px;width:100%;min-height:500px;overflow:visible}
+.status-map-stage{position:relative;width:720px;height:500px;margin:0 auto;max-width:100%;overflow:visible}
+.status-map-svg{position:absolute;left:150px;top:50px;width:420px;height:388px;z-index:2}
+.status-connector-svg{position:absolute;inset:0;width:720px;height:500px;z-index:1;pointer-events:none;overflow:visible}
+.status-callout{position:absolute;width:140px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 8px 8px;cursor:pointer;box-shadow:0 2px 8px rgba(30,27,46,.08);z-index:4;transition:transform .12s,box-shadow .12s,border-color .12s}
+.status-callout:hover{transform:translateY(-2px);box-shadow:0 7px 15px rgba(30,27,46,.13);border-color:#B8B0D8}
+.status-callout:after{content:"";position:absolute;top:0;left:0;right:0;height:3px;border-radius:10px 10px 0 0;background:var(--prov-accent,#7C3AED)}
+.status-callout-head{display:flex;align-items:center;gap:5px;margin-bottom:6px}
+.status-callout-dot{width:8px;height:8px;border-radius:50%;flex:0 0 8px}
+.status-callout-name{font-size:10px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.status-callout-total{margin-left:auto;font:700 8px 'IBM Plex Mono',monospace;color:var(--text3)}
+.status-callout-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.status-callout-pill{border-radius:5px;padding:3px 2px;text-align:center;line-height:1.05}
+.status-callout-pill b{display:block;font:800 12px 'IBM Plex Mono',monospace}
+.status-callout-pill span{display:block;font-size:7px;font-weight:700;margin-top:2px}
+.status-callout .ps-com{background:var(--green-bg);color:var(--green-text)}
+.status-callout .ps-ont{background:var(--blue-bg);color:var(--blue-text)}
+.status-callout .ps-pen{background:var(--amber-bg);color:var(--amber-text)}
+.status-callout .ps-del{background:var(--red-bg);color:var(--red-text)}
+.status-callout.national{width:165px;left:277px;top:0}
+.status-callout.kpk{left:0;top:58px}
+.status-callout.gb{right:0;top:42px}
+.status-callout.ajk{right:0;top:155px}
+.status-callout.punjab{right:0;top:270px}
+.status-callout.baluchistan{left:0;top:250px}
+.status-callout.sindh{right:0;top:385px}
+.status-map-label{font-size:9px;font-weight:800;fill:#5B21B6}
+@media(max-width:940px){.prov-status-network{overflow-x:auto;padding-bottom:6px}.status-map-stage{margin-left:0;margin-right:0}}
+@media(max-width:650px){.prov-status-network{min-height:0;overflow:visible}.status-map-stage{width:100%;height:auto;display:flex;flex-direction:column;gap:10px}.status-map-svg,.status-connector-svg{position:relative;left:auto;top:auto;width:100%;height:auto}.status-callout{position:relative!important;left:auto!important;right:auto!important;top:auto!important;width:100%;order:3}.status-callout.national{order:1}.status-map-svg{order:2}.status-connector-svg{display:none}}
+
 /* BAR CHART */
 .bchart{display:flex;flex-direction:column;gap:10px}
 .brow{cursor:pointer;padding:4px 6px;margin:0 -6px;border-radius:8px;transition:background .12s}
@@ -562,15 +600,27 @@ function drawPie(cid,data){
   ctx.beginPath();ctx.arc(cx,cy,r*0.55,0,2*Math.PI);ctx.fillStyle='#fff';ctx.fill();
 }
 function areaProgressHTML(list, scopeProv){
-  return AREA_ORDER.map(area=>{
-    const items = list.filter(l=>l.area===area);
-    if(!items.length) return '';
-    const comp = items.filter(l=>l.status==='Completed').length;
-    const p = pct(comp, items.length);
-    const f = {area:area}; if(scopeProv) f.prov = scopeProv;
-    return `<div class="area-row" onclick='goActivities(${JSON.stringify(f)})'><div class="area-row-head"><span class="area-lbl">${esc(area)}</span><span class="area-stats"><span class="area-total">${items.length}</span><span class="area-pct">${p}%</span></span></div>
-    <div class="bar-track"><div class="bar-bg" style="width:100%;background:var(--grad1)"></div><div class="bar-done" style="width:${p}%;background:var(--grad1)"></div></div></div>`;
+  const colors = {Completed:'#059669','On Track':'#2563EB',Delayed:'#DC2626',Pending:'#D97706','':'#C9C2E8'};
+  const labels = [{key:'Completed',label:'Completed'},{key:'On Track',label:'On track'}];
+  const areas = AREA_ORDER.map(area=>({area,items:list.filter(l=>l.area===area)})).filter(g=>g.items.length);
+  const cards = areas.map(({area,items})=>{
+    const c=countsFor(items), total=items.length;
+    const completed=c.Completed||0, onTrack=c['On Track']||0;
+    const progress=total?Math.round((completed+onTrack)/total*100):0;
+    const segments=[{key:'Completed',v:completed,color:colors.Completed},{key:'On Track',v:onTrack,color:colors['On Track']}];
+    const r=32, circumference=2*Math.PI*r;
+    let offset=0;
+    const arcs=segments.map(seg=>{
+      if(!seg.v) return '';
+      const dash=seg.v/total*circumference;
+      const arc=`<circle cx="40" cy="40" r="${r}" fill="none" stroke="${seg.color}" stroke-width="10" stroke-dasharray="${dash} ${circumference-dash}" stroke-dashoffset="${-offset}" transform="rotate(-90 40 40)"/>`;
+      offset+=dash; return arc;
+    }).join('');
+    const f={area}; if(scopeProv) f.prov=scopeProv;
+    const legend=labels.map(x=>`<span class="area-mini-key" title="${x.key}: ${c[x.key]||0}"><i class="area-mini-dot" style="background:${colors[x.key]}"></i>${x.label} <b class="area-mini-count">${c[x.key]||0}</b></span>`).join('');
+    return `<div class="area-donut-card" role="button" tabindex="0" title="View activities for ${esc(area)}" onclick='goActivities(${JSON.stringify(f)})' onkeydown='if(event.key==="Enter"||event.key===" "){event.preventDefault();goActivities(${JSON.stringify(f)})}'><div class="area-donut-title">${esc(area)}</div><svg class="area-donut-svg" viewBox="0 0 80 80" aria-label="${esc(area)} progress ${progress}%"><circle cx="40" cy="40" r="${r}" fill="none" stroke="var(--surface2)" stroke-width="10"/>${arcs}<circle cx="40" cy="40" r="22" fill="#fff"/><text x="40" y="39" text-anchor="middle" class="area-donut-center">${progress}%</text><text x="40" y="49" text-anchor="middle" class="area-donut-sub">progress</text></svg><div class="area-donut-legend">${legend}</div></div>`;
   }).join('');
+  return `<div class="area-progress-grid">${cards}</div>`;
 }
 function pieLegendHTML(list, scopeProv){
   return statusData(list).map(d=>{
@@ -703,36 +753,65 @@ function provinceColor(rec,p){
   const t = p/100;
   return rgbToHex(start.map((s,i)=> s + (base[i]-s)*t));
 }
+function provinceStatusCardsHTML(list){
+  const accents={NATIONAL:'#7C3AED',PUNJAB:'#2563EB',SINDH:'#EC4899',KPK:'#16A34A',BALUCHISTAN:'#D97706',AJK:'#0891B2',GB:'#A16207'};
+  const lineStarts={
+    NATIONAL:{x:360,y:48}, KPK:{x:140,y:88}, GB:{x:580,y:72}, AJK:{x:580,y:185},
+    PUNJAB:{x:580,y:300}, BALUCHISTAN:{x:140,y:280}, SINDH:{x:580,y:420}
+  };
+  // Connector endpoints are placed directly on the corresponding province area of the map.
+  // Map is positioned at x=150, y=50 with a compact 420x388 display size.
+  const lineEnds={
+    NATIONAL:{x:357,y:205}, KPK:{x:330,y:165}, GB:{x:378,y:135}, AJK:{x:400,y:180},
+    PUNJAB:{x:345,y:235}, BALUCHISTAN:{x:235,y:300}, SINDH:{x:295,y:340}
+  };
+  const cards=['NATIONAL','KPK','GB','AJK','PUNJAB','BALUCHISTAN','SINDH'];
+  const cardClass={NATIONAL:'national',KPK:'kpk',GB:'gb',AJK:'ajk',PUNJAB:'punjab',BALUCHISTAN:'baluchistan',SINDH:'sindh'};
+  const lines=cards.map(rec=>{
+    const pos=lineStarts[rec], end=lineEnds[rec];
+    return `<path d="M ${pos.x} ${pos.y} L ${end.x} ${end.y}" fill="none" stroke="${accents[rec]}" stroke-width="1.6" stroke-dasharray="4 4" stroke-linecap="round" opacity=".8"/>`;
+  }).join('');
+  const card=rec=>{
+    const items=list.filter(l=>l.recipient===rec), c=countsFor(items), accent=accents[rec];
+    const f=JSON.stringify({prov:rec});
+    return `<div class="status-callout ${cardClass[rec]}" style="--prov-accent:${accent}" onclick='goActivities(${f})'>
+      <div class="status-callout-head"><span class="status-callout-dot" style="background:${accent}"></span><span class="status-callout-name">${esc(RECIPIENT_LABEL[rec])}</span><span class="status-callout-total">${items.length}</span></div>
+      <div class="status-callout-grid">
+        <div class="status-callout-pill ps-com" onclick='event.stopPropagation();goActivities(${JSON.stringify({prov:rec,status:"Completed"})})'><b>${c['Completed']}</b><span>Completed</span></div>
+        <div class="status-callout-pill ps-ont" onclick='event.stopPropagation();goActivities(${JSON.stringify({prov:rec,status:"On Track"})})'><b>${c['On Track']}</b><span>On Track</span></div>
+        <div class="status-callout-pill ps-pen" onclick='event.stopPropagation();goActivities(${JSON.stringify({prov:rec,status:"Pending"})})'><b>${c['Pending']}</b><span>Pending</span></div>
+        <div class="status-callout-pill ps-del" onclick='event.stopPropagation();goActivities(${JSON.stringify({prov:rec,status:"Delayed"})})'><b>${c['Delayed']}</b><span>Delayed</span></div>
+      </div>
+    </div>`;
+  };
+  return `<div class="prov-status-network"><svg class="status-connector-svg" viewBox="0 0 720 500" aria-hidden="true">${lines}</svg>${cards.map(card).join('')}</div>`;
+}
+
 function mapHTML(list){
   const byRec = {};
   RECIPIENT_ORDER.forEach(r=>{ byRec[r] = list.filter(l=>l.recipient===r); });
   let svgParts = '';
   Object.keys(MAP_PATHS).forEach(rec=>{
-    if(rec==='NATIONAL') return; // rendered separately as a leader-line callout (territory too small to label inside)
+    if(rec==='NATIONAL') return;
     const items = byRec[rec]||[];
     const comp = items.filter(l=>l.status==='Completed').length;
     const p = items.length ? pct(comp, items.length) : null;
     const color = items.length ? provinceColor(rec,p) : '#E9E7F3';
     svgParts += `<path data-rec="${rec}" d="${MAP_PATHS[rec]}" fill="${color}" fill-rule="evenodd" onclick='goActivities({prov:"${rec}"})'><title>${esc(RECIPIENT_LABEL[rec])}: ${comp}/${items.length} completed (${p===null?0:p}%)</title></path>`;
-    svgParts += `<text class="map-pct-label" data-rec="${rec}" x="0" y="0" onclick='goActivities({prov:"${rec}"})'>${items.length ? p+'%' : ''}</text>`;
   });
   const natItems = byRec['NATIONAL']||[];
   const natComp = natItems.filter(l=>l.status==='Completed').length;
   const natP = natItems.length ? pct(natComp, natItems.length) : null;
-  svgParts += `<line x1="${NATIONAL_CENTROID.x}" y1="${NATIONAL_CENTROID.y}" x2="${NAT_CALLOUT.x}" y2="${NAT_CALLOUT.y}" stroke="#7C3AED" stroke-width="1" stroke-dasharray="2,2"/>`;
   svgParts += `<circle cx="${NATIONAL_CENTROID.x}" cy="${NATIONAL_CENTROID.y}" r="3.5" fill="${natItems.length?provinceColor('NATIONAL',natP):'#E9E7F3'}" stroke="#7C3AED" stroke-width="1.3" onclick='goActivities({prov:"NATIONAL"})'><title>National (Islamabad): ${natComp}/${natItems.length} completed</title></circle>`;
-  svgParts += `<circle cx="${NAT_CALLOUT.x}" cy="${NAT_CALLOUT.y}" r="2.5" fill="#7C3AED"/>`;
-  svgParts += `<text x="${NAT_CALLOUT.x+8}" y="${NAT_CALLOUT.y+4}" font-size="13" font-weight="800" fill="#5B21B6" font-family="'IBM Plex Sans',sans-serif" onclick='goActivities({prov:"NATIONAL"})' style="cursor:pointer">National ${natItems.length?natP+'%':''}</text>`;
-
-  const legendItems = RECIPIENT_ORDER.map(rec=>{
-    return `<div class="map-list-item" onclick='goActivities({prov:"${rec}"})'><div class="map-sw" style="background:${PROVINCE_COLORS[rec]}"></div><div>${esc(RECIPIENT_LABEL[rec])}</div></div>`;
-  }).join('');
 
   return `<div class="map-wrap">
-    <svg id="pk-choropleth-svg" class="map-svg" viewBox="${MAP_VIEWBOX}">${svgParts}</svg>
-    <div class="map-legend">${legendItems}</div>
+    <div class="status-map-stage">
+      ${provinceStatusCardsHTML(list)}
+      <svg id="pk-choropleth-svg" class="map-svg status-map-svg" viewBox="${MAP_VIEWBOX}">${svgParts}</svg>
+    </div>
   </div>`;
 }
+
 function positionMapLabels(){
   const svg = document.getElementById('pk-choropleth-svg');
   if(!svg) return;
