@@ -657,7 +657,8 @@ function institutionContributionHTML(list){
   const rows=[...counts.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
   if(!rows.length) return `<p style="color:var(--text3);font-size:12px;padding:6px 0">No institution contributions have been recorded yet.</p>`;
   const shown=rows.slice(0,12), max=Math.max(1,...shown.map(x=>x[1]));
-  return `<div class="inst-contrib-list">${shown.map(([name,count])=>`<div class="inst-contrib-row" title="${esc(name)}: ${count} activity contributions" onclick='applyInstitutionFilter(${JSON.stringify(name)})'><div class="inst-contrib-name">${esc(name)}</div><div class="inst-contrib-track"><div class="inst-contrib-fill" style="width:${Math.max(2,Math.round(count/max*100))}%"></div></div><div class="inst-contrib-count">${count}</div></div>`).join('')}</div>${rows.length>12?`<div class="inst-contrib-note">Showing 12 of ${rows.length} institutions, ranked by activities contributed to.</div>`:''}<div class="inst-contrib-note">An activity is counted once for each institution listed, including activities with multiple contributing institutions.</div>`;
+  const totalContributions=rows.reduce((sum,row)=>sum+row[1],0);
+  return `<div class="inst-contrib-list">${shown.map(([name,count])=>{const share=totalContributions?Math.round(count/totalContributions*100):0;return `<div class="inst-contrib-row" title="${esc(name)}: ${count} activity contributions (${share}%)" onclick='applyInstitutionFilter(${JSON.stringify(name)})'><div class="inst-contrib-name">${esc(name)}</div><div class="inst-contrib-track"><div class="inst-contrib-fill" style="width:${Math.max(2,Math.round(count/max*100))}%"></div></div><div class="inst-contrib-count">${count} <span style="color:var(--text3);font-weight:500">(${share}%)</span></div></div>`}).join('')}</div>${rows.length>12?`<div class="inst-contrib-note">Showing 12 of ${rows.length} institutions, ranked by activities contributed to.</div>`:''}`;
 }
 function applyInstitutionFilter(name){
   const input=document.getElementById('s-search');
@@ -832,6 +833,27 @@ function mapHTML(list){
   </div>`;
 }
 
+function scopedMapHTML(scopeProv, list){
+  const accent=PROVINCE_COLORS[scopeProv]||'#7C3AED';
+  let shape='';
+  let viewBox=MAP_VIEWBOX;
+  if(scopeProv==='NATIONAL'){
+    const {x,y}=NATIONAL_CENTROID;
+    viewBox=`${x-35} ${y-35} 70 70`;
+    shape=`<circle cx="${x}" cy="${y}" r="12" fill="${accent}" stroke="#fff" stroke-width="3"><title>National level</title></circle>`;
+  }else if(MAP_PATHS[scopeProv]){
+    const d=MAP_PATHS[scopeProv];
+    const nums=(d.match(/-?\d+(?:\.\d+)?/g)||[]).map(Number);
+    const xs=[],ys=[]; for(let i=0;i+1<nums.length;i+=2){xs.push(nums[i]);ys.push(nums[i+1]);}
+    const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys),pad=10;
+    viewBox=`${minX-pad} ${minY-pad} ${maxX-minX+pad*2} ${maxY-minY+pad*2}`;
+    shape=`<path d="${d}" fill="${accent}" stroke="#fff" stroke-width="1.8" fill-rule="evenodd"><title>${esc(RECIPIENT_LABEL[scopeProv])}</title></path>`;
+  }
+  const c=countsFor(list), total=list.length;
+  const card=`<div class="status-callout" style="--prov-accent:${accent};position:relative;left:auto;right:auto;top:auto;width:100%;max-width:240px;cursor:pointer" onclick='goActivities({prov:${JSON.stringify(scopeProv)}})'><div class="status-callout-head"><span class="status-callout-dot" style="background:${accent}"></span><span class="status-callout-name">${esc(RECIPIENT_LABEL[scopeProv]||scopeProv)}</span><span class="status-callout-total">${total}</span></div><div class="status-callout-grid"><div class="status-callout-pill ps-com"><b>${c['Completed']}</b><span>Completed</span></div><div class="status-callout-pill ps-ont"><b>${c['On Track']}</b><span>On Track</span></div><div class="status-callout-pill ps-pen"><b>${c['Pending']}</b><span>Pending</span></div><div class="status-callout-pill ps-del"><b>${c['Delayed']}</b><span>Delayed</span></div></div></div>`;
+  return `<div style="display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;min-height:180px"><svg viewBox="${viewBox}" style="width:min(100%,300px);height:210px;overflow:visible" role="img" aria-label="${esc(RECIPIENT_LABEL[scopeProv]||scopeProv)} area map">${shape}</svg>${card}</div>`;
+}
+
 function positionMapLabels(){
   const svg = document.getElementById('pk-choropleth-svg');
   if(!svg) return;
@@ -876,16 +898,18 @@ function renderDashboardPanel(containerId, scopeProv){
     <div class="card full-row"><div class="card-title">Status Overview by Province / Level</div>${provTableHTML(list)}</div>
     `;
   } else {
-    // PROVINCE LEVEL
-    const areaGroups = AREA_ORDER.map(a=>({key:a,label:a,items:list.filter(l=>l.area===a)})).filter(g=>g.items.length);
+    // PROVINCE / LEVEL DASHBOARD
     body = `
     <div class="two-col">
-      <div class="card"><div class="card-title">Sub-Activities by IHR Core Capacity Area</div>${areaProgressHTML(list,scopeProv)}</div>
-      <div class="card"><div class="card-title">Status Overview</div>
-        <div class="pie-wrap"><canvas id="pie-${containerId}" width="140" height="140"></canvas><div class="pie-legend">${pieLegendHTML(list,scopeProv)}</div></div>
+      <div class="card"><div class="card-title">Implementation Status — ${esc(RECIPIENT_LABEL[scopeProv])}</div>${scopedMapHTML(scopeProv,list)}</div>
+      <div>
+        <div class="card" style="margin-bottom:16px"><div class="card-title">Status Overview</div>
+          <div class="pie-wrap"><canvas id="pie-${containerId}" width="140" height="140"></canvas><div class="pie-legend">${pieLegendHTML(list,scopeProv)}</div></div>
+        </div>
+        <div class="card"><div class="card-title">Institution Contribution</div>${institutionContributionHTML(list)}</div>
       </div>
     </div>
-    <div class="card full-row"><div class="card-title">Completed vs Total by Core Capacity Area</div>${barChartHTML(areaGroups,'area',scopeProv)}</div>
+    <div class="card full-row"><div class="card-title">Sub-Activities by IHR Core Capacity Area</div>${areaProgressHTML(list,scopeProv)}</div>
     `;
   }
 
