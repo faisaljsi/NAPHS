@@ -135,6 +135,8 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 .map-svg path:hover{opacity:.82}
 .map-svg circle{cursor:pointer;transition:opacity .12s}
 .map-svg circle:hover{opacity:.75}
+.scoped-pct-label{font-size:18px;font-weight:900;fill:#1E1B2E;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round;pointer-events:none;font-family:'IBM Plex Sans',sans-serif;dominant-baseline:middle}
+.country-progress-summary{margin:-4px 0 10px;color:var(--text2);font-size:13px}.country-progress-summary strong{font-size:18px;color:var(--text);margin-left:5px}
 .map-pct-label{font-size:13px;font-weight:800;fill:#1E1B2E;text-anchor:middle;dominant-baseline:middle;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round;pointer-events:none;font-family:'IBM Plex Sans',sans-serif}
 .map-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:14px;padding-top:6px;border-top:1px solid var(--border)}
 .map-list-item{display:flex;align-items:center;gap:6px;cursor:pointer;padding:3px 8px;border-radius:6px;font-size:11.5px;color:var(--text2)}
@@ -818,12 +820,12 @@ function mapHTML(list){
     const comp = items.filter(l=>l.status==='Completed').length;
     const p = items.length ? pct(comp, items.length) : null;
     const color = items.length ? provinceColor(rec,p) : '#E9E7F3';
-    svgParts += `<path data-rec="${rec}" d="${MAP_PATHS[rec]}" fill="${color}" fill-rule="evenodd" onclick='goActivities({prov:"${rec}"})'><title>${esc(RECIPIENT_LABEL[rec])}: ${comp}/${items.length} completed (${p===null?0:p}%)</title></path>`;
+    const progress = items.length ? pct(items.filter(l=>l.status==='Completed'||l.status==='On Track').length, items.length) : 0;
+    svgParts += `<path data-rec="${rec}" d="${MAP_PATHS[rec]}" fill="${color}" fill-rule="evenodd" onclick='goActivities({prov:"${rec}"})'><title>${esc(RECIPIENT_LABEL[rec])}: ${progress}% overall progress (Completed + On Track)</title></path><text class="map-pct-label" data-rec="${rec}" x="0" y="0">${progress}%</text>`;
   });
   const natItems = byRec['NATIONAL']||[];
-  const natComp = natItems.filter(l=>l.status==='Completed').length;
-  const natP = natItems.length ? pct(natComp, natItems.length) : null;
-  svgParts += `<circle cx="${NATIONAL_CENTROID.x}" cy="${NATIONAL_CENTROID.y}" r="3.5" fill="${natItems.length?provinceColor('NATIONAL',natP):'#E9E7F3'}" stroke="#7C3AED" stroke-width="1.3" onclick='goActivities({prov:"NATIONAL"})'><title>National (Islamabad): ${natComp}/${natItems.length} completed</title></circle>`;
+  const natProgress = natItems.length ? pct(natItems.filter(l=>l.status==='Completed'||l.status==='On Track').length, natItems.length) : 0;
+  svgParts += `<circle cx="${NATIONAL_CENTROID.x}" cy="${NATIONAL_CENTROID.y}" r="3.5" fill="${natItems.length?provinceColor('NATIONAL',natProgress):'#E9E7F3'}" stroke="#7C3AED" stroke-width="1.3" onclick='goActivities({prov:"NATIONAL"})'><title>National (Islamabad): ${natProgress}% overall progress</title></circle><text class="map-pct-label" data-rec="NATIONAL" x="${NATIONAL_CENTROID.x+18}" y="${NATIONAL_CENTROID.y-7}">${natProgress}%</text>`;
 
   return `<div class="map-wrap">
     <div class="status-map-stage">
@@ -850,20 +852,28 @@ function scopedMapHTML(scopeProv, list){
     shape=`<path d="${d}" fill="${accent}" stroke="#fff" stroke-width="1.8" fill-rule="evenodd"><title>${esc(RECIPIENT_LABEL[scopeProv])}</title></path>`;
   }
   const c=countsFor(list), total=list.length;
+  const progress=total?pct(c['Completed']+c['On Track'],total):0;
+  if(scopeProv==='NATIONAL') shape += `<text class="scoped-pct-label" x="${NATIONAL_CENTROID.x}" y="${NATIONAL_CENTROID.y+23}" text-anchor="middle">${progress}%</text>`;
+  else if(MAP_PATHS[scopeProv]) shape += `<text class="scoped-pct-label" data-scope-label="true" x="0" y="0" text-anchor="middle">${progress}%</text>`;
   const card=`<div class="status-callout" style="--prov-accent:${accent};position:relative;left:auto;right:auto;top:auto;width:100%;max-width:240px;cursor:pointer" onclick='goActivities({prov:${JSON.stringify(scopeProv)}})'><div class="status-callout-head"><span class="status-callout-dot" style="background:${accent}"></span><span class="status-callout-name">${esc(RECIPIENT_LABEL[scopeProv]||scopeProv)}</span><span class="status-callout-total">${total}</span></div><div class="status-callout-grid"><div class="status-callout-pill ps-com"><b>${c['Completed']}</b><span>Completed</span></div><div class="status-callout-pill ps-ont"><b>${c['On Track']}</b><span>On Track</span></div><div class="status-callout-pill ps-pen"><b>${c['Pending']}</b><span>Pending</span></div><div class="status-callout-pill ps-del"><b>${c['Delayed']}</b><span>Delayed</span></div></div></div>`;
   return `<div style="display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;min-height:180px"><svg viewBox="${viewBox}" style="width:min(100%,300px);height:210px;overflow:visible" role="img" aria-label="${esc(RECIPIENT_LABEL[scopeProv]||scopeProv)} area map">${shape}</svg>${card}</div>`;
 }
 
 function positionMapLabels(){
   const svg = document.getElementById('pk-choropleth-svg');
-  if(!svg) return;
-  svg.querySelectorAll('path[data-rec]').forEach(path=>{
-    const rec = path.getAttribute('data-rec');
-    const label = svg.querySelector(`text.map-pct-label[data-rec="${rec}"]`);
-    if(!label) return;
-    const bbox = path.getBBox();
-    label.setAttribute('x', bbox.x + bbox.width/2);
-    label.setAttribute('y', bbox.y + bbox.height/2);
+  if(svg){
+    svg.querySelectorAll('path[data-rec]').forEach(path=>{
+      const rec = path.getAttribute('data-rec');
+      const label = svg.querySelector(`text.map-pct-label[data-rec="${rec}"]`);
+      if(!label) return;
+      const bbox = path.getBBox();
+      label.setAttribute('x', bbox.x + bbox.width/2);
+      label.setAttribute('y', bbox.y + bbox.height/2);
+    });
+  }
+  document.querySelectorAll('svg[aria-label$=" area map"]').forEach(map=>{
+    const shape=map.querySelector('path'); const label=map.querySelector('text[data-scope-label]');
+    if(shape&&label){const b=shape.getBBox();label.setAttribute('x',b.x+b.width/2);label.setAttribute('y',b.y+b.height/2);}
   });
 }
 
@@ -886,7 +896,7 @@ function renderDashboardPanel(containerId, scopeProv){
     // COUNTRY LEVEL
     body = `
     <div class="two-col">
-      <div class="card"><div class="card-title">Implementation Status by Province</div>${mapHTML(list)}</div>
+      <div class="card"><div class="card-title">Implementation Status by Province</div><div class="country-progress-summary">Country Overall Progress: <strong>${pct(c['Completed']+c['On Track'],list.length)}%</strong></div>${mapHTML(list)}</div>
       <div>
         <div class="card" style="margin-bottom:16px"><div class="card-title">Status Overview</div>
           <div class="pie-wrap"><canvas id="pie-${containerId}" width="140" height="140"></canvas><div class="pie-legend">${pieLegendHTML(list,scopeProv)}</div></div>
