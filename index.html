@@ -56,7 +56,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 .kpi-sub{font-size:11px;color:var(--text3);margin-top:4px}
 .c-green{color:var(--green)}.c-amber{color:var(--amber)}.c-red{color:var(--red)}.c-blue{color:var(--blue)}.c-violet{color:var(--violet)}
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
-.inst-contrib-list{display:flex;flex-direction:column;gap:9px;padding:2px 0 4px}.inst-contrib-row{display:grid;grid-template-columns:minmax(110px, 1.1fr) minmax(70px,2fr) 34px;align-items:center;gap:9px;cursor:pointer}.inst-contrib-name{font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.inst-contrib-track{height:8px;background:var(--surface2);border-radius:6px;overflow:hidden}.inst-contrib-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,#059669,#34D399)}.inst-contrib-count{font:700 11px 'IBM Plex Mono',monospace;color:var(--text);text-align:right}.inst-contrib-note{font-size:10px;color:var(--text3);margin-top:8px}
+.inst-contrib-wrap{display:grid;grid-template-columns:minmax(120px, .9fr) minmax(160px,1.1fr);align-items:center;gap:18px;padding:4px 0 2px}.inst-contrib-donut{width:100%;max-width:190px;aspect-ratio:1;border-radius:50%;position:relative;margin:0 auto;display:grid;place-items:center}.inst-contrib-donut:after{content:'';position:absolute;inset:23%;border-radius:50%;background:var(--surface)}.inst-contrib-total{position:relative;z-index:1;text-align:center;font:800 22px 'IBM Plex Mono',monospace;color:var(--text)}.inst-contrib-total small{display:block;font:600 9px sans-serif;letter-spacing:.04em;text-transform:uppercase;color:var(--text3);margin-top:3px}.inst-contrib-list{display:flex;flex-direction:column;gap:8px;padding:2px 0 4px;min-width:0}.inst-contrib-row{display:grid;grid-template-columns:9px minmax(0,1fr) auto;align-items:center;gap:8px;cursor:pointer}.inst-contrib-swatch{width:9px;height:9px;border-radius:2px}.inst-contrib-name{font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.inst-contrib-count{font:700 11px 'IBM Plex Mono',monospace;color:var(--text);text-align:right}.inst-contrib-note{font-size:10px;color:var(--text3);margin-top:8px}@media(max-width:620px){.inst-contrib-wrap{grid-template-columns:1fr}.inst-contrib-donut{max-width:155px}}
 
 .full-row{margin-bottom:18px}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 1px 3px rgba(109,40,217,.06)}
@@ -248,7 +248,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
       <div class="hdr-sub">IHR Secretariat &middot; NIH &middot; National Institute of Health, Islamabad</div>
     </div>
   </div>
-  <span class="hdr-badge">National Action Plan for Health Security &middot; NAPHS Consolidated Tracker 2024 - 2028</span>
+  <span class="hdr-badge">National Action Plan for Health Security &middot; NAPHS Consolidated Tracker, July 2026</span>
 </div>
 
 <div class="layout">
@@ -649,7 +649,9 @@ function barChartHTML(groups, scopeKind, scopeProv){
 }
 function institutionContributionHTML(list){
   const counts = new Map();
+  const responseStatuses = new Set(['Completed','On Track','Pending','Delayed']);
   list.forEach(item=>{
+    if(!responseStatuses.has(item.status)) return;
     const raw = String(item.institutions||'').trim();
     if(!raw) return;
     // Count each institution once per activity, even if it appears more than once in the cell.
@@ -657,10 +659,13 @@ function institutionContributionHTML(list){
     institutions.forEach(name=>counts.set(name,(counts.get(name)||0)+1));
   });
   const rows=[...counts.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
-  if(!rows.length) return `<p style="color:var(--text3);font-size:12px;padding:6px 0">No institution contributions have been recorded yet.</p>`;
-  const shown=rows.slice(0,12), max=Math.max(1,...shown.map(x=>x[1]));
-  const totalContributions=rows.reduce((sum,row)=>sum+row[1],0);
-  return `<div class="inst-contrib-list">${shown.map(([name,count])=>{const share=totalContributions?Math.round(count/totalContributions*100):0;return `<div class="inst-contrib-row" title="${esc(name)}: ${count} activity contributions (${share}%)" onclick='applyInstitutionFilter(${JSON.stringify(name)})'><div class="inst-contrib-name">${esc(name)}</div><div class="inst-contrib-track"><div class="inst-contrib-fill" style="width:${Math.max(2,Math.round(count/max*100))}%"></div></div><div class="inst-contrib-count">${count}</div></div>`}).join('')}</div>${rows.length>12?`<div class="inst-contrib-note">Showing 12 of ${rows.length} institutions, ranked by activities contributed to.</div>`:''}`;
+  if(!rows.length) return `<p style="color:var(--text3);font-size:12px;padding:6px 0">No partner responses have been recorded yet.</p>`;
+  const shown=rows.slice(0,12);
+  const palette=['#059669','#2563eb','#d97706','#7c3aed','#db2777','#0891b2','#65a30d','#ea580c','#4f46e5','#0d9488','#c026d3','#64748b'];
+  const total=shown.reduce((sum,row)=>sum+row[1],0);
+  let angle=0;
+  const stops=shown.map(([name,count],i)=>{const start=angle;angle+=count/total*360;return `${palette[i%palette.length]} ${start.toFixed(2)}deg ${angle.toFixed(2)}deg`;}).join(', ');
+  return `<div class="inst-contrib-wrap"><div class="inst-contrib-donut" style="background:conic-gradient(${stops})" role="img" aria-label="Partner responses donut chart"><div class="inst-contrib-total">${total}<small>Total responses</small></div></div><div class="inst-contrib-list">${shown.map(([name,count],i)=>`<div class="inst-contrib-row" title="${esc(name)}: ${count} recorded responses" onclick='applyInstitutionFilter(${JSON.stringify(name)})'><span class="inst-contrib-swatch" style="background:${palette[i%palette.length]}"></span><span class="inst-contrib-name">${esc(name)}</span><span class="inst-contrib-count">${count}</span></div>`).join('')}</div></div>${rows.length>12?`<div class="inst-contrib-note">Showing 12 of ${rows.length} partners, ranked by recorded responses.</div>`:''}`;
 }
 function applyInstitutionFilter(name){
   const input=document.getElementById('s-search');
